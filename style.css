@@ -1,0 +1,522 @@
+/* ============================================
+   OVERTURE — A Writing Exhibition
+   Three themes: red (jester), blue (lana), green (overgrown)
+   ============================================ */
+
+/* --- Reset --- */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* --- Theme: The Jester (Red) --- */
+.theme-red {
+  --bg: #14090a;
+  --bg-surface: rgba(139, 32, 48, 0.07);
+  --text: #e0ceaf;
+  --text-muted: #7a6245;
+  --accent: #8b2030;
+  --accent-soft: rgba(139, 32, 48, 0.35);
+  --border: rgba(139, 32, 48, 0.25);
+  --nav-link: #7a6245;
+  --nav-link-hover: #e0ceaf;
+  --label-font: 'Palatino Linotype', Palatino, Georgia, serif;
+}
+
+/* --- Theme: Born to Die (Blue) --- */
+.theme-blue {
+  --bg: #191c2b;
+  --bg-surface: rgba(176, 136, 136, 0.06);
+  --text: #d2c1ad;
+  --text-muted: rgba(210, 193, 173, 0.45);
+  --accent: #b08888;
+  --accent-soft: rgba(176, 136, 136, 0.25);
+  --border: rgba(176, 136, 136, 0.18);
+  --nav-link: rgba(210, 193, 173, 0.4);
+  --nav-link-hover: #d2c1ad;
+  --label-font: 'Palatino Linotype', Palatino, Georgia, serif;
+}
+
+/* --- Theme: Overgrown (Green) --- */
+.theme-green {
+  --bg: #07100a;
+  --bg-surface: rgba(93, 184, 78, 0.04);
+  --text: #d8ccb0;
+  --text-muted: #5a7a4a;
+  --accent: #4db34a;
+  --accent-soft: rgba(93, 184, 78, 0.22);
+  --border: rgba(93, 184, 78, 0.15);
+  --nav-link: #4a6a3a;
+  --nav-link-hover: #d8ccb0;
+  --label-font: Georgia, 'Times New Roman', serif;
+}
+
+
+/* --- Base --- */
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: Georgia, 'Times New Roman', serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.85;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+
+/* --- Navigation --- */
+nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 22px 36px;
+  border-bottom: 1px solid var(--border);
+}
+
+.site-name {
+  font-size: 16px;
+  letter-spacing: 4px;
+  font-variant: small-caps;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.nav-links {
+  display: flex;
+  gap: 28px;
+}
+
+.nav-links a {
+  color: var(--nav-link);
+  font-size: 11px;
+  text-decoration: none;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  font-family: -apple-system, 'Segoe UI', Helvetica, sans-serif;
+  transition: color 0.3s;
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+  color: var(--nav-link-hover);
+}
+
+
+/* --- Content --- */
+.content {
+  max-width: 660px;
+  margin: 0 auto;
+  padding: 64px 28px 80px;
+  flex: 1;
+  animation: fadeUp 0.7s ease-out;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+
+/* --- Section Labels --- */
+.section-label {
+  color: var(--accent);
+  font-size: 10px;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  font-family: -apple-system, 'Segoe UI', Helvetica, sans-serif;
+  margin-bottom: 20px;
+  display: block;
+}
+
+
+/* --- Headings --- */
+h1 {
+  font-size: 34px;
+  font-weight: normal;
+  font-style: italic;
+  line-height: 1.2;
+  margin-bottom: 18px;
+  color: var(--text);
+}
+
+h2 {
+  font-size: 18px;
+  font-weight: normal;
+  font-style: italic;
+  color: var(--text);
+  margin-top: 48px;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+h3 {
+  font-size: 15px;
+  font-weight: normal;
+  font-style: italic;
+  color: var(--text-muted);
+  margin-top: 32px;
+  margin-bottom: 10px;
+}
+
+
+/* --- Body Text --- */
+p {
+  margin-bottom: 20px;
+  font-size: 15px;
+  color: var(--text);
+  line-height: 1.9;
+}
+
+.subtitle {
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.9;
+  margin-bottom: 36px;
+  max-width: 500px;
+}
+
+
+/* --- Blockquotes / Epigraphs --- */
+blockquote {
+  border-left: 2px solid var(--accent);
+  padding: 18px 22px;
+  background: var(--bg-surface);
+  margin: 32px 0;
+  font-style: italic;
+  font-size: 15px;
+  line-height: 2;
+  color: var(--text);
+}
+
+blockquote cite {
+  display: block;
+  margin-top: 14px;
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-style: normal;
+  font-family: -apple-system, 'Segoe UI', Helvetica, sans-serif;
+}
+
+.epigraph {
+  text-align: center;
+  font-style: italic;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.9;
+  margin: 0 auto 40px;
+  max-width: 460px;
+  padding: 24px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+
+/* --- Dividers --- */
+.divider {
+  width: 50px;
+  height: 1px;
+  background: var(--accent-soft);
+  margin: 32px 0;
+}
+
+.divider-center {
+  width: 50px;
+  height: 1px;
+  background: var(--accent-soft);
+  margin: 32px auto;
+}
+
+
+/* --- Piece Cards (Home Page) --- */
+.pieces {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 40px;
+}
+
+.piece-card {
+  display: block;
+  padding: 22px 26px;
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  text-decoration: none;
+  transition: border-color 0.3s, background 0.3s;
+}
+
+.piece-card:hover {
+  border-color: var(--accent-soft);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.piece-card .card-label {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-family: -apple-system, 'Segoe UI', Helvetica, sans-serif;
+  margin-bottom: 8px;
+  opacity: 0.7;
+}
+
+.piece-card .card-title {
+  display: block;
+  font-size: 20px;
+  font-style: italic;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.piece-card .card-desc {
+  display: block;
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.piece-card .card-arrow {
+  display: block;
+  margin-top: 12px;
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-family: -apple-system, 'Segoe UI', Helvetica, sans-serif;
+}
+
+
+/* --- Vine Layout (Green Page) --- */
+.vine-layout {
+  display: flex;
+  align-items: flex-start;
+  flex: 1;
+}
+
+.vine-column {
+  flex-shrink: 0;
+  width: 80px;
+  padding-top: 40px;
+}
+
+.vine-column svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.vine-column-right svg {
+  transform: scaleX(-1);
+}
+
+.vine-content {
+  flex: 1;
+  padding: 64px 24px 80px;
+  text-align: center;
+  animation: fadeUp 0.7s ease-out;
+}
+
+.vine-content .subtitle {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+
+/* --- Lab Report Specific --- */
+.report-meta {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+  margin-bottom: 36px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.report-meta div {
+  font-size: 12px;
+}
+
+.report-meta .meta-label {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-family: -apple-system, 'Segoe UI', Helvetica, sans-serif;
+  margin-bottom: 4px;
+}
+
+.report-meta .meta-value {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.data-note {
+  font-family: 'Courier New', Consolas, monospace;
+  font-size: 13px;
+  background: var(--bg-surface);
+  padding: 16px 20px;
+  border-left: 2px solid var(--accent-soft);
+  margin: 24px 0;
+  line-height: 1.7;
+  color: var(--text-muted);
+}
+
+
+/* --- Footer --- */
+footer {
+  padding: 24px 36px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-family: -apple-system, 'Segoe UI', Helvetica, sans-serif;
+}
+
+
+/* --- Hero Section --- */
+.hero {
+  padding: 80px 36px 64px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+  animation: fadeUp 0.7s ease-out;
+}
+
+.hero .section-label {
+  margin-bottom: 24px;
+}
+
+.hero h1 {
+  font-size: 38px;
+  margin-bottom: 20px;
+}
+
+.hero .subtitle {
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+.hero-quote {
+  border-left: 2px solid var(--accent);
+  padding: 18px 22px;
+  background: var(--bg-surface);
+  margin: 32px auto;
+  max-width: 480px;
+  text-align: left;
+  font-style: italic;
+  font-size: 14px;
+  line-height: 2;
+  color: var(--text);
+}
+
+.hero-stats {
+  display: flex;
+  justify-content: center;
+  gap: 36px;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+.hero-stats div {
+  text-align: center;
+}
+
+.hero-stats .stat-label {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-family: -apple-system, 'Segoe UI', Helvetica, sans-serif;
+  margin-bottom: 6px;
+}
+
+.hero-stats .stat-value {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.hero-thin-line {
+  width: 36px;
+  height: 1px;
+  background: var(--accent);
+  margin: 0 auto 26px;
+  opacity: 0.6;
+}
+
+.hero-tags {
+  color: var(--text-muted);
+  font-size: 11px;
+  letter-spacing: 5px;
+  text-transform: lowercase;
+  margin: 0 0 40px;
+  font-family: -apple-system, 'Segoe UI', Helvetica, sans-serif;
+  opacity: 0.6;
+}
+
+.hero-scroll {
+  display: inline-block;
+  margin-top: 36px;
+  color: var(--accent);
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  text-decoration: none;
+  font-family: -apple-system, 'Segoe UI', Helvetica, sans-serif;
+  opacity: 0.7;
+  transition: opacity 0.3s;
+}
+
+.hero-scroll:hover { opacity: 1; }
+
+/* --- Figures --- */
+.figure {
+  margin: 32px 0;
+  text-align: center;
+}
+
+.figure img {
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+}
+
+.fig-caption {
+  font-size: 12px;
+  font-style: italic;
+  color: var(--text-muted);
+  text-align: center;
+  margin: 12px 0 0;
+  line-height: 1.6;
+}
+
+
+/* --- Responsive --- */
+@media (max-width: 640px) {
+  nav { padding: 18px 20px; }
+  .nav-links { gap: 16px; }
+  .nav-links a { font-size: 10px; letter-spacing: 1.5px; }
+  .content { padding: 40px 20px 60px; }
+  h1 { font-size: 26px; }
+  .hero { padding: 48px 20px 40px; }
+  .hero h1 { font-size: 28px; }
+  .hero-stats { gap: 20px; flex-wrap: wrap; }
+
+  .vine-column { width: 40px; }
+  .vine-content { padding: 40px 16px 60px; }
+
+  .report-meta { flex-direction: column; gap: 14px; }
+}
+
+@media (max-width: 420px) {
+  .vine-column { display: none; }
+  .nav-links { gap: 12px; }
+}

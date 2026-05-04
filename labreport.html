@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="download.jpeg" type="image/x-icon">
+  <title>Lab Report — T. Zhang</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .report-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 24px 0;
+      font-size: 13px;
+    }
+    .report-table th,
+    .report-table td {
+      padding: 10px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+    .report-table th {
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-family: -apple-system, 'Segoe UI', Helvetica, sans-serif;
+      font-weight: normal;
+      border-bottom: 2px solid var(--accent-soft);
+    }
+    .report-table td.fail { color: #c06060; font-weight: bold; }
+    .report-table td.pass { color: var(--text-muted); }
+    .toc {
+      margin: 32px 0;
+      padding: 20px 24px;
+      background: var(--bg-surface);
+      border-left: 2px solid var(--accent-soft);
+    }
+    .toc a {
+      display: block;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 13px;
+      padding: 4px 0;
+      transition: color 0.2s;
+    }
+    .toc a:hover { color: var(--text); }
+    .toc-label {
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-family: -apple-system, 'Segoe UI', Helvetica, sans-serif;
+      margin-bottom: 10px;
+      display: block;
+    }
+  </style>
+</head>
+<body class="theme-blue">
+
+  <nav>
+    <a href="index.html" class="site-name">T. Zhang</a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="english.html">English</a>
+      <a href="labreport.html" class="active">Lab Report</a>
+    </div>
+  </nav>
+
+  <!-- ====== ARTISTIC HERO ====== -->
+  <div class="hero">
+    <h1>Programming<br></h1>
+    <p class="subtitle">
+      nerdddddd
+    </p>
+    <div class="hero-thin-line"></div>
+    <p class="hero-tags">algorithms &middot; graphs &middot; shortest paths &middot; data structures</p>
+    <div class="hero-quote">
+      turn-constrained Dijkstra with four key modifications & test findings
+    </div>
+
+    <div class="hero-stats">
+      <div>
+        <span class="stat-label">Tests</span>
+        <span class="stat-value">9 scenarios</span>
+      </div>
+      <div>
+        <span class="stat-label">Paths Validated</span>
+        <span class="stat-value">~40 total</span>
+      </div>
+      <div>
+        <span class="stat-label">Violations</span>
+        <span class="stat-value">Zero</span>
+      </div>
+    </div>
+
+    <a href="#report" class="hero-scroll">&darr; Read the report</a>
+  </div>
+
+  <!-- ====== CONTENT ====== -->
+  <div class="content" id="report">
+
+    <span class="section-label">CS 3050: Data Structures</span>
+    <h1>A4 &mdash; Constrained Shortest Paths</h1>
+    <p class="subtitle">Tianyi Zhang<br>University of Missouri &mdash; Columbia<br>April 2026</p>
+
+    <div class="report-meta">
+      <div>
+        <span class="meta-label">Course</span>
+        <span class="meta-value">CS 3050</span>
+      </div>
+      <div>
+        <span class="meta-label">Semester</span>
+        <span class="meta-value">Spring 2026</span>
+      </div>
+      <div>
+        <span class="meta-label">Assignment</span>
+        <span class="meta-value">A4</span>
+      </div>
+    </div>
+
+    <div class="toc">
+      <span class="toc-label">Contents</span>
+      <a href="#s1">1. Introduction</a>
+      <a href="#s2">2. Algorithms Implemented</a>
+      <a href="#s3">3. Testing Plan</a>
+      <a href="#s4">4. Test Results</a>
+      <a href="#s5">5. Summary and Conclusion</a>
+      <a href="#s6">6. Appendix: Source Code</a>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ==================== SECTION 1 ==================== -->
+    <h2 id="s1">1. Introduction</h2>
+
+    <p>
+      The shortest-path problem is fundamental in graph algorithms: given a weighted graph and two vertices,
+      find the path of minimum total weight between them. Dijkstra&rsquo;s algorithm solves this efficiently for
+      non-negative edge weights by greedily expanding the cheapest frontier node. Its correctness relies on a
+      critical property: the search state is memoryless. The only information needed at a vertex is the cumulative
+      cost to reach it. Path history is irrelevant to the next decision, which is why Dijkstra can lock each vertex on
+      first expansion via a visited array.
+    </p>
+
+    <p>
+      Real-world vehicles &mdash; aircraft, ground robots, trucks &mdash; have kinematic constraints. A vehicle with a finite
+      turning radius cannot make arbitrarily sharp turns. When we arrive at a vertex, the direction from which we
+      arrived determines which outgoing edges are physically feasible. The search state is no longer memoryless:
+      it must encode the arrival trajectory.
+    </p>
+
+    <p>
+      This creates a fundamental incompatibility with standard Dijkstra. When Dijkstra pops a vertex from the
+      priority queue it is locked as visited under the guarantee that no cheaper path exists. Under a turn
+      constraint, the cheapest arrival at a vertex might come in at an angle that makes turning toward the
+      destination impossible. A more expensive arrival along a different edge might be the only kinematically
+      feasible route. Locking the vertex on its first expansion would trap the algorithm and miss the true optimal
+      path.
+    </p>
+
+    <p>
+      Inserting a local angle check into Dijkstra &mdash; rejecting outgoing edges that turn too sharply &mdash; does not solve
+      the problem either, for two reasons. First, angle-only checks are defeated by the discretization trap: in a
+      high-resolution grid, very short edges can chain together to approximate a physically impossible turn
+      through a sequence of individually legal micro-maneuvers. Second, the visited array still prevents alternative
+      trajectories through previously visited vertices.
+    </p>
+
+    <p>
+      This assignment implements and tests a turn-constrained Dijkstra algorithm with four key modifications: (1)
+      an expanded state space where the search key is the pair (vertex, incoming edge) rather than just vertex,
+      restoring the memoryless property and allowing the textbook Dijkstra proof to apply; (2) removal of the
+      visited array in favour of a parent-tree (history array) that permits vertex revisits with different incoming
+      edges; (3) a minimum edge length requirement of L<sub>min</sub>/2 to bound realised curvature and prevent
+      micro-maneuvers; and (4) a Priority Search Tree (PST) at each vertex that answers 2D angle-and-length
+      range queries in O(log n + k<sub>valid</sub>) time, avoiding the candidate explosion of naive linear filtering.
+    </p>
+
+    <!-- ==================== SECTION 2 ==================== -->
+    <h2 id="s2">2. Algorithms Implemented</h2>
+
+    <h3>2.1 Graph Representation</h3>
+
+    <p>
+      The graph is a geometric adjacency list. Vertices are placed on a regular grid over a rectangular environment
+      with configurable resolution (cells per meter). Each vertex stores integer grid coordinates (x, y) and a unique
+      ID computed as row &times; cols + col. Each directed edge stores source and destination IDs, the Euclidean edge
+      weight, and two precomputed angles &mdash; the outgoing angle from the source (angle_leaving_src) and the
+      incoming angle at the destination (angle_entering_dst). Angles are computed via atan2(dy, dx) and
+      normalised to [0, 360). For every directed edge u &rarr; v, the reverse edge v &rarr; u is also constructed with
+      appropriately reversed angles.
+    </p>
+
+    <p>
+      Obstacles are convex polygons (rectangles in all test cases). During graph construction, any edge whose line
+      segment would intersect an obstacle is excluded. Intersection testing combines segment-vs-polygon-edge
+      checks (including the collinear-overlap case) with multiple sample-point containment checks along each
+      edge to catch boundary-skimming trajectories.
+    </p>
+
+    <h3>2.2 Standard Dijkstra (Baseline)</h3>
+
+    <p>
+      The baseline Dijkstra implementation follows the textbook algorithm. The
+      priority queue holds (vertex, cumulative_cost) pairs. A distance array tracks the best-known cost to each
+      vertex, and a visited array prevents re-expansion. On each pop, if the vertex is unvisited, it is marked visited
+      and all adjacent edges are relaxed. Path reconstruction uses a predecessor array. A binary min-heap serves
+      as the priority queue, giving the standard O((|V| + |E|) log |V|) running time.
+    </p>
+
+    <h3>2.3 Turn-Constrained Shortest Path</h3>
+
+    <p>
+      The constrained algorithm is Dijkstra&rsquo;s algorithm applied to an expanded state-space graph. Each state is the
+      pair (vertex, incoming_edge) where incoming_edge is the directed edge used to arrive at vertex. The source vertex is assigned a sentinel
+      incoming-edge ID since it has no arrival direction. In this expanded space, the standard Dijkstra dominance
+      relation d[v] = min cost to reach v becomes best_cost[(v, e)] = min cost to reach v via edge e. Each state is
+      processed at most once at its final cost, exactly as the textbook proof requires. The algorithm terminates
+      when the destination vertex is popped (in any state) because any alternative path to the destination must
+      be more expensive.
+    </p>
+
+    <p>
+      <strong>State space via edge IDs.</strong> Every directed edge in the graph is assigned a unique integer ID (0 through |E|&minus;1)
+      at algorithm start, with |E| reserved as the sentinel source state. A hash map from Edge* to integer ID
+      provides O(1) lookups during relaxation. The best_cost array is one-dimensional of size |E|+1, giving exact
+      dominance tracking without any approximation.
+    </p>
+
+    <p>
+      <strong>Turn validation.</strong> When expanding state (u, e_in), the arrival trajectory is known from the edge&rsquo;s
+      angle_entering_dst. The continuation direction is computed as (arrival_angle + 180) mod 360 &mdash; the
+      direction the vehicle would continue if going straight. An outgoing edge e_out is kinematically valid only if
+      its angle_leaving_src falls within &plusmn;&theta;<sub>max</sub> of the continuation direction. At the source vertex, all outgoing edges
+      are valid regardless of angle because the vehicle has no prior trajectory.
+    </p>
+
+    <p>
+      <strong>Length enforcement (L<sub>min</sub>/2 theorem).</strong> To prevent micro-maneuvers, every edge traversed
+      must have weight &ge; L<sub>min</sub>/2. This guarantees that every two consecutive edges in a path span at least L<sub>min</sub> total
+      distance, bounding the realised curvature to &kappa;<sub>max</sub> &asymp; &theta;<sub>max</sub>/L<sub>min</sub>. The benefit of the half-length formulation is
+      that the complex pairwise constraint reduces to a simple per-edge check.
+    </p>
+
+    <p>
+      <strong>No visited array.</strong> Because the state includes an incoming edge, two distinct arrivals at the same vertex via
+      different edges are different states and are tracked separately. The parent tree replaces the visited array and enables path reconstruction even
+      in the presence of vertex revisits.
+    </p>
+
+    <p>
+      <strong>Lazy decrease-key.</strong> The min-heap implementation does not expose handles, so
+      Q.modifyKey from the lecture pseudocode is implemented via lazy deletion: when a relaxation finds a better
+      cost for a state, the updated entry is pushed onto the heap without removing the stale entry. At pop time, if
+      the popped entry&rsquo;s cost exceeds best_cost for its state, it is skipped.
+    </p>
+
+    <h3>2.4 Priority Search Tree (PST)</h3>
+
+    <p>
+      At each vertex, outgoing edges must be queried by two constraints simultaneously: angle &isin; [&theta;<sub>in</sub> &plusmn; &theta;<sub>max</sub>] and
+      length &ge; L<sub>min</sub>/2. A naive approach &mdash; BST on angle, then linearly filter by length &mdash; costs O(log n + k<sub>candidates</sub>),
+      which degrades badly when many edges satisfy the angle constraint but few satisfy the length constraint.
+    </p>
+
+    <p>
+      The Priority Search Tree combines a BST on angle with a max-heap on edge length. Construction: starting
+      from edges sorted by angle, the longest edge becomes the root, remaining edges split at the median angle
+      into left and right subtrees, and the process recurses. Each node stores the maximum edge length within its
+      subtree.
+    </p>
+
+    <p>
+      Query: at each node, if the subtree&rsquo;s max length is below L<sub>min</sub>/2, the entire branch is pruned instantly.
+      Otherwise the node&rsquo;s own edge is tested against both constraints, and recursion descends into left or right
+      based on the angle split. Angular wraparound across 0&deg; / 360&deg; is handled by splitting the query into two
+      sub-ranges and unioning the results. When &theta;<sub>max</sub> &ge; 180&deg;, the query short-circuits to a full-circle traversal. The
+      query runs in O(log n + k<sub>valid</sub>), fully bypassing k<sub>candidates</sub>.
+    </p>
+
+    <p>
+      PSTs are built lazily &mdash; only when a vertex is first expanded by the main algorithm &mdash; which avoids building
+      trees for vertices that are never reached.
+    </p>
+
+    <!-- ==================== SECTION 3 ==================== -->
+    <h2 id="s3">3. Testing Plan</h2>
+
+    <p>
+      Confidence in correctness requires a layered testing approach. No single test can prove correctness in
+      general, but nine distinct tests across four categories provide strong combined evidence. All paths returned
+      by any algorithm are automatically checked for validity &mdash; every segment length and every turn angle is
+      verified programmatically &mdash; so correctness claims are not dependent on visual inspection alone.
+    </p>
+
+    <h3>3.1 Designed Scenarios (Tests 1&ndash;5)</h3>
+
+    <p><strong>Test 1 &mdash; Double-Channel Benchmark (provided).</strong> Two large obstacles with &ldquo;trap teeth&rdquo; form a narrow channel that is mathematically shorter but kinematically invalid. The PST algorithm must reject the short path and find the smooth arc over the top.</p>
+    <p><strong>Test 2 &mdash; Open Field (no obstacles).</strong> Both algorithms should find the same straight-line optimal path. Confirms no unnecessary cost when constraints are non-binding.</p>
+    <p><strong>Test 3 &mdash; U-Turn with tight &theta;<sub>max</sub>.</strong> A wall across the middle with a gap at the top forces a detour. Tight &theta;<sub>max</sub> = 30&deg; forces the PST algorithm to use a smooth multi-edge arc.</p>
+    <p><strong>Test 4 &mdash; Resolution Scaling.</strong> Same environment at resolutions 1.0 and 2.0 cells/m. Confirms L<sub>min</sub>/2 floor correctly prevents resolution-dependent micro-maneuvers.</p>
+    <p><strong>Test 5 &mdash; Zigzag Corridor.</strong> Alternating obstacle teeth create a complex multi-obstacle environment.</p>
+
+    <h3>3.2 Structural Component Verification (Test 6)</h3>
+    <p><strong>Test 6 &mdash; PST Query Correctness vs Brute Force.</strong> 12 different query ranges at 20 sample vertices &mdash; 240 query tests total. Each query must return exactly the same set of edges as brute-force.</p>
+
+    <h3>3.3 Edge and Negative Cases (Test 8)</h3>
+    <p><strong>Test 8 &mdash; Edge Cases.</strong> Four boundary cases: (a) src == dst; (b) Unreachable destination; (c) &theta;<sub>max</sub> = 0; (d) L<sub>min</sub> larger than all edges.</p>
+
+    <h3>3.4 Statistical / Stress Tests (Tests 7, 9)</h3>
+    <p><strong>Test 7 &mdash; Randomized Stress Testing.</strong> 30 random graphs with random obstacles, validated programmatically.</p>
+    <p><strong>Test 9 &mdash; Parameter Sweep on &theta;<sub>max</sub>.</strong> Fixed scenario run with &theta;<sub>max</sub> &isin; {15&deg;, 30&deg;, 45&deg;, 60&deg;, 90&deg;, 180&deg;}.</p>
+
+    <h3>3.5 Sufficiency</h3>
+    <p>The combination covers the primary failure mode, non-binding-constraint sanity, direct PST verification, boundary conditions, statistical robustness, and parameter-dependent behaviour. Every path in every test is checked against both constraints programmatically.</p>
+
+    <!-- ==================== SECTION 4 ==================== -->
+    <h2 id="s4">4. Test Results</h2>
+
+    <h3>4.1 Test 1: Double-Channel Benchmark</h3>
+
+    <div class="data-note">
+      Parameters: 30&times;30m environment, resolution 2.0 cells/m (3721 vertices, ~2M directed edges),
+      &theta;<sub>max</sub> = 45&deg;, L<sub>min</sub> = 8.0m, max edge distance 12.0m.<br>
+      Start (2.0, 15.0), End (28.0, 15.0). Four rectangular obstacles including two trap teeth.
+    </div>
+
+    <p><strong>Standard Dijkstra:</strong> path length 27.17 m &mdash; INVALID</p>
+
+    <table class="report-table">
+      <tr><th>Edge</th><th>Segment</th><th>Length (m)</th><th>Turn (&deg;)</th><th>Valid?</th></tr>
+      <tr><td>1</td><td>1834 &rarr; 1974</td><td>9.06</td><td>N/A</td><td class="pass">OK</td></tr>
+      <tr><td>2</td><td>1974 &rarr; 1922</td><td>4.53</td><td>12.68</td><td class="pass">OK</td></tr>
+      <tr><td>3</td><td>1922 &rarr; 1800</td><td>1.00</td><td>83.66</td><td class="fail">FAIL [SHORT][TURN]</td></tr>
+      <tr><td>4</td><td>1800 &rarr; 1747</td><td>4.03</td><td>82.87</td><td class="fail">FAIL [TURN]</td></tr>
+      <tr><td>5</td><td>1747 &rarr; 1886</td><td>8.56</td><td>13.83</td><td class="pass">OK</td></tr>
+    </table>
+
+    <p>Dijkstra&rsquo;s path passes through the narrow trap channel. Edge 3 is 1.00m (below 4.0m minimum) with an 83.66&deg; turn (nearly 2&times; the 45&deg; limit). Clearly kinematically infeasible.</p>
+
+    <div class="figure">
+      <img src="fig1.png" alt="Test 1 — Standard Dijkstra path (27.17m, INVALID). The path threads the narrow trap channel between obstacles.">
+      <p class="fig-caption">Figure 1. Test 1 &mdash; Standard Dijkstra path (27.17m, INVALID). The path threads the narrow trap channel between obstacles.</p>
+    </div>
+
+    <p><strong>PST Constrained:</strong> path length 37.75 m &mdash; VALID (188,799 expansions)</p>
+
+    <table class="report-table">
+      <tr><th>Edge</th><th>Segment</th><th>Length (m)</th><th>Turn (&deg;)</th><th>Valid?</th></tr>
+      <tr><td>1</td><td>1834 &rarr; 2573</td><td>6.95</td><td>N/A</td><td class="pass">OK</td></tr>
+      <tr><td>2</td><td>2573 &rarr; 3191</td><td>6.40</td><td>8.40</td><td class="pass">OK</td></tr>
+      <tr><td>3</td><td>3191 &rarr; 3261</td><td>4.53</td><td>45.00</td><td class="pass">OK</td></tr>
+      <tr><td>4</td><td>3261 &rarr; 3213</td><td>6.52</td><td>10.74</td><td class="pass">OK</td></tr>
+      <tr><td>5</td><td>3213 &rarr; 2792</td><td>4.61</td><td>45.00</td><td class="pass">OK</td></tr>
+      <tr><td>6</td><td>2792 &rarr; 1886</td><td>8.75</td><td>9.64</td><td class="pass">OK</td></tr>
+    </table>
+
+    <p>The PST-constrained algorithm correctly rejects the narrow channel and routes around the top obstacle. All six segments are &ge; 4.0m and all turns are &le; 45&deg;. The path is 38.9% longer but fully kinematically valid.</p>
+
+    <div class="figure">
+      <img src="fig2.png" alt="Test 1 — PST Constrained path (37.75m, VALID). The path forms a smooth arc over the top obstacle.">
+      <p class="fig-caption">Figure 2. Test 1 &mdash; PST Constrained path (37.75m, VALID). Smooth arc over the top obstacle with all turns &le; 45&deg; and all segments &ge; 4.0m.</p>
+    </div>
+
+    <h3>4.2 Test 2: Open Field (No Obstacles)</h3>
+
+    <div class="data-note">Parameters: 20&times;20m, resolution 1.0, &theta;<sub>max</sub> = 45&deg;, L<sub>min</sub> = 4.0m. Start (2.0, 10.0), End (18.0, 10.0).</div>
+
+    <table class="report-table">
+      <tr><th>Algorithm</th><th>Path Length</th><th>Edges</th><th>All Valid?</th></tr>
+      <tr><td>Standard Dijkstra</td><td>16.00 m</td><td>2</td><td class="pass">YES</td></tr>
+      <tr><td>PST Constrained</td><td>16.00 m</td><td>2</td><td class="pass">YES</td></tr>
+    </table>
+
+    <p>Both algorithms find the identical 16.00m path. The constrained algorithm introduces no unnecessary cost when a straight-line path is feasible.</p>
+
+    <h3>4.3 Test 3: U-Turn Scenario</h3>
+
+    <div class="data-note">Parameters: 20&times;20m, resolution 2.0, &theta;<sub>max</sub> = 30&deg; (tight), L<sub>min</sub> = 6.0m. Wall at x &isin; [9, 11] from y=0 to y=15 with gap above. Start (5.0, 5.0), End (15.0, 5.0).</div>
+
+    <p><strong>Dijkstra:</strong> 24.35m &mdash; INVALID (sharp turns 51.91&deg; and 53.13&deg; exceed 30&deg; limit)</p>
+
+    <div class="figure">
+      <img src="fig3.png" alt="Test 3 — Dijkstra (24.35m, INVALID). Sharp angular transitions at the gap entry/exit violate θmax = 30°.">
+      <p class="fig-caption">Figure 3. Test 3 &mdash; Dijkstra (24.35m, INVALID). Sharp angular transitions at the gap entry/exit violate &theta;<sub>max</sub> = 30&deg;.</p>
+    </div>
+
+    <p><strong>PST:</strong> 32.32m &mdash; VALID (10 edges, max turn 29.20&deg;, min length 3.00m)</p>
+
+    <table class="report-table">
+      <tr><th>Edge</th><th>Length (m)</th><th>Turn (&deg;)</th><th>Valid?</th></tr>
+      <tr><td>1</td><td>3.20</td><td>N/A</td><td class="pass">OK</td></tr>
+      <tr><td>2</td><td>3.04</td><td>29.20</td><td class="pass">OK</td></tr>
+      <tr><td>3</td><td>3.16</td><td>27.90</td><td class="pass">OK</td></tr>
+      <tr><td>4</td><td>3.54</td><td>26.57</td><td class="pass">OK</td></tr>
+      <tr><td>5</td><td>3.16</td><td>26.57</td><td class="pass">OK</td></tr>
+      <tr><td>6</td><td>3.04</td><td>27.90</td><td class="pass">OK</td></tr>
+      <tr><td>7</td><td>3.20</td><td>29.20</td><td class="pass">OK</td></tr>
+      <tr><td>8</td><td>3.81</td><td>28.14</td><td class="pass">OK</td></tr>
+      <tr><td>9</td><td>3.00</td><td>23.20</td><td class="pass">OK</td></tr>
+      <tr><td>10</td><td>3.16</td><td>18.43</td><td class="pass">OK</td></tr>
+    </table>
+
+    <div class="figure">
+      <img src="fig4.png" alt="Test 3 — PST Constrained (32.32m, VALID). A smooth 10-segment arc enables navigation under θmax = 30°.">
+      <p class="fig-caption">Figure 4. Test 3 &mdash; PST Constrained (32.32m, VALID). A smooth 10-segment arc navigates the U-turn under &theta;<sub>max</sub> = 30&deg;.</p>
+    </div>
+
+    <h3>4.4 Test 4: Resolution Scaling</h3>
+
+    <div class="data-note">Parameters: 20&times;20m, &theta;<sub>max</sub> = 45&deg;, L<sub>min</sub> = 6.0m. Two obstacles creating a corridor. Tested at 1.0 and 2.0 cells/m.</div>
+
+    <table class="report-table">
+      <tr><th>Resolution</th><th>Vertices</th><th>Dijkstra</th><th>PST</th><th>Both Valid?</th></tr>
+      <tr><td>1.0 cells/m</td><td>441</td><td>16.00 m</td><td>16.00 m</td><td class="pass">YES</td></tr>
+      <tr><td>2.0 cells/m</td><td>1681</td><td>16.00 m</td><td>16.00 m</td><td class="pass">YES</td></tr>
+    </table>
+
+    <p>Both algorithms produce the same 16.00m valid path at both resolutions. The L<sub>min</sub>/2 = 3.0m length floor prevents micro-maneuvers. PST expansion count grows from 2,321 to 34,825 but path cost and validity are unchanged.</p>
+
+    <div class="figure">
+      <img src="fig5.png" alt="Test 4 at resolution 2.0 cells/m — PST path (16.00m, VALID).">
+      <p class="fig-caption">Figure 5. Test 4 at resolution 2.0 cells/m &mdash; PST path (16.00m, VALID). Higher resolution produces the same path cost.</p>
+    </div>
+
+    <h3>4.5 Test 5: Zigzag Corridor</h3>
+
+    <div class="data-note">Parameters: 30&times;20m, resolution 2.0, &theta;<sub>max</sub> = 45&deg;, L<sub>min</sub> = 8.0m. Four alternating obstacle teeth.</div>
+
+    <table class="report-table">
+      <tr><th>Algorithm</th><th>Path Length</th><th>Edges</th><th>All Valid?</th></tr>
+      <tr><td>Standard Dijkstra</td><td>26.03 m</td><td>3</td><td class="pass">YES</td></tr>
+      <tr><td>PST Constrained</td><td>26.03 m</td><td>3</td><td class="pass">YES</td></tr>
+    </table>
+
+    <p>Both algorithms find the same 26.03m valid path. The PST algorithm correctly identifies that Dijkstra&rsquo;s path is already kinematically valid and does not introduce unnecessary cost.</p>
+
+    <div class="figure">
+      <img src="fig6.png" alt="Test 5 — PST Constrained (26.03m, VALID). The obstacle field admits the same path as Dijkstra.">
+      <p class="fig-caption">Figure 6. Test 5 &mdash; PST Constrained (26.03m, VALID). The constrained algorithm does not add cost when unnecessary.</p>
+    </div>
+
+    <h3>4.6 Test 6: PST Query Correctness vs Brute-Force</h3>
+
+    <table class="report-table">
+      <tr><th>Metric</th><th>Result</th></tr>
+      <tr><td>Vertices sampled</td><td>20</td></tr>
+      <tr><td>Queries per vertex</td><td>12</td></tr>
+      <tr><td>Total queries tested</td><td>240</td></tr>
+      <tr><td>Queries matching brute-force</td><td>240 / 240</td></tr>
+      <tr><td>Total edges returned by PST</td><td>10,165</td></tr>
+      <tr><td>Total edges returned by brute-force</td><td>10,165</td></tr>
+      <tr><td>Pass rate</td><td class="pass">100.0%</td></tr>
+    </table>
+
+    <p>Every one of the 240 queries produced identical results to brute-force filtering, directly verifying the PST data structure&rsquo;s correctness.</p>
+
+    <h3>4.7 Test 8: Edge and Negative Cases</h3>
+
+    <table class="report-table">
+      <tr><th>Case</th><th>Input</th><th>Expected</th><th>Actual</th><th>Pass?</th></tr>
+      <tr><td>1: src == dst</td><td>same vertex</td><td>trivial 1-vertex path</td><td>1 vertex returned</td><td class="pass">YES</td></tr>
+      <tr><td>2: Unreachable dest</td><td>wall blocks all</td><td>NO PATH</td><td>NO PATH</td><td class="pass">YES</td></tr>
+      <tr><td>3: &theta;<sub>max</sub> = 0</td><td>no turns allowed</td><td>straight path only</td><td>16m straight (valid)</td><td class="pass">YES</td></tr>
+      <tr><td>4: L<sub>min</sub> too large</td><td>L<sub>min</sub> &gt; all edges</td><td>NO PATH</td><td>NO PATH</td><td class="pass">YES</td></tr>
+    </table>
+
+    <h3>4.8 Test 9: Parameter Sweep on &theta;<sub>max</sub></h3>
+
+    <table class="report-table">
+      <tr><th>&theta;<sub>max</sub></th><th>Path Cost</th><th>Edges</th><th>Valid?</th></tr>
+      <tr><td>15&deg;</td><td>NO PATH</td><td>&mdash;</td><td>&mdash;</td></tr>
+      <tr><td>30&deg;</td><td>16.81 m</td><td>4</td><td class="pass">YES</td></tr>
+      <tr><td>45&deg;</td><td>16.81 m</td><td>4</td><td class="pass">YES</td></tr>
+      <tr><td>60&deg;</td><td>16.81 m</td><td>4</td><td class="pass">YES</td></tr>
+      <tr><td>90&deg;</td><td>16.81 m</td><td>4</td><td class="pass">YES</td></tr>
+      <tr><td>180&deg;</td><td>16.81 m</td><td>4</td><td class="pass">YES</td></tr>
+    </table>
+
+    <h3>4.9 Test 7: Randomized Stress Testing</h3>
+
+    <table class="report-table">
+      <tr><th>Metric</th><th>Result</th></tr>
+      <tr><td>Trials</td><td>30</td></tr>
+      <tr><td>Paths found</td><td>30</td></tr>
+      <tr><td>Paths validated</td><td>30</td></tr>
+      <tr><td>Validity rate</td><td class="pass">100.0%</td></tr>
+      <tr><td>Path costs observed</td><td>3.00m &ndash; 27.38m</td></tr>
+      <tr><td>Expansion counts observed</td><td>3 &ndash; 14,055</td></tr>
+    </table>
+
+    <p>All 30 randomly generated paths were programmatically validated across diverse graph topologies with random obstacle placements and random source/destination pairs.</p>
+
+    <h3>4.10 Results Summary</h3>
+
+    <table class="report-table">
+      <tr><th>Test</th><th>Dijkstra</th><th>D Valid?</th><th>PST</th><th>P Valid?</th></tr>
+      <tr><td>1: Benchmark</td><td>27.17 m</td><td class="fail">NO</td><td>37.75 m</td><td class="pass">YES</td></tr>
+      <tr><td>2: Open Field</td><td>16.00 m</td><td class="pass">YES</td><td>16.00 m</td><td class="pass">YES</td></tr>
+      <tr><td>3: U-Turn (30&deg;)</td><td>24.35 m</td><td class="fail">NO</td><td>32.32 m</td><td class="pass">YES</td></tr>
+      <tr><td>4: Resolution</td><td>16.00 m</td><td class="pass">YES</td><td>16.00 m</td><td class="pass">YES</td></tr>
+      <tr><td>5: Zigzag</td><td>26.03 m</td><td class="pass">YES</td><td>26.03 m</td><td class="pass">YES</td></tr>
+      <tr><td>6: PST Queries</td><td>&mdash;</td><td>&mdash;</td><td>240/240</td><td class="pass">YES</td></tr>
+      <tr><td>7: Random Stress (30&times;)</td><td>&mdash;</td><td>&mdash;</td><td>30/30</td><td class="pass">YES</td></tr>
+      <tr><td>8: Edge Cases (4&times;)</td><td>&mdash;</td><td>&mdash;</td><td>4/4</td><td class="pass">YES</td></tr>
+      <tr><td>9: Parameter Sweep</td><td>&mdash;</td><td>&mdash;</td><td>5/6 return path</td><td class="pass">YES</td></tr>
+    </table>
+
+    <!-- ==================== SECTION 5 ==================== -->
+    <h2 id="s5">5. Summary and Conclusion</h2>
+
+    <p>
+      This assignment report is the implementation and testing of a turn-constrained shortest-path algorithm
+      based on Dijkstra&rsquo;s algorithm applied to an expanded state-space graph. The expanded state (vertex,
+      incoming_edge) is the natural lifting of Dijkstra&rsquo;s original formulation: it preserves the textbook dominance
+      proof while incorporating the arrival trajectory required for turn feasibility. The parent-tree replaces the
+      visited array and admits vertex revisits via distinct edges, the L<sub>min</sub>/2 length floor bounds realised curvature
+      and prevents micro-maneuvers, and the Priority Search Tree reduces per-vertex queries to O(log n + k<sub>valid</sub>),
+      matching the unconstrained asymptotic complexity of standard Dijkstra.
+    </p>
+
+    <p>
+      Testing provides evidence at four levels: designed scenarios (Tests 1&ndash;5) verify the core algorithmic behaviour
+      including the critical case where the shortest path is kinematically invalid and must be replaced by a longer
+      valid path; structural verification (Test 6) confirms the PST component against brute-force on 240 queries;
+      boundary and negative tests (Test 8) confirm robust behaviour at degenerate inputs; and statistical testing
+      across 30 random graphs (Test 7) plus a &theta;<sub>max</sub> sweep (Test 9) provide evidence that the algorithm&rsquo;s
+      correctness is not specific to the designed scenarios. All ~40 paths produced across all tests were
+      automatically validated, with zero violations observed on paths returned by the PST-constrained algorithm.
+    </p>
+
+    <p>
+      The benchmark result of 37.75m closely matches the expected 38.1m reference, with the small gap
+      attributable to minor differences in how the graph construction handles edge-adjacent obstacle geometry.
+      The algorithm consistently produces paths satisfying &theta;<sub>max</sub> and L<sub>min</sub>/2 in every designed scenario, confirms the
+      L<sub>min</sub>/2 invariant on micro-maneuver prevention across resolution changes, and terminates correctly on both
+      solvable and unsolvable instances.
+    </p>
+
+    <p>
+      The expanded state-space formulation with edge-ID dominance is the key correctness insight: it makes the
+      constrained problem structurally identical to ordinary Dijkstra on a larger graph, which lets the textbook
+      optimality proof apply unchanged.
+    </p>
+
+    <div class="divider"></div>
+
+    <h2 id="s6">6. Appendix: Source Code</h2>
+
+    <p>
+      The complete implementation consists of 15 files (7 .c + 8 .h) totaling approximately 1,500 lines.
+      Compile with:
+    </p>
+
+    <div class="data-note">
+      gcc -O2 -o csp main.c graph.c stack.c min_heap.c pst.c \<br>
+      &nbsp;&nbsp;shortest_path.c print_output.c new_tests.c -lm
+    </div>
+
+    <p style="font-size: 13px; color: var(--text-muted); font-style: italic;">
+      Source code omitted from this web presentation for readability. See the full PDF report for the complete listing.
+    </p>
+
+  </div>
+
+  <footer>
+    <a href="index.html" style="color: var(--text-muted); text-decoration: none;">&larr; Back to Home</a>
+  </footer>
+
+</body>
+</html>
